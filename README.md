@@ -1,0 +1,1 @@
+A comprehensive implementation of Extreme Point-based heuristics for the 3D bin packing problem, based on the seminal work by Crainic, Perboli, and Tadei (2008). https://core.ac.uk/download/pdf/11385818.pdf

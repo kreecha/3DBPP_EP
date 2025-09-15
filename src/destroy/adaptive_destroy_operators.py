@@ -2,8 +2,7 @@
 """
 Adaptive ALNS Destroy and Repair Operators for 3D Bin Packing
 Features dynamic learning from problem size and recent performance
-
-
+Adapted for 3D Bin Packing Problem using Extreme Point Heuristics
 
 
 @author: Kreecha Puphaiboon
@@ -31,15 +30,16 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 """
 
-import random
-import numpy as np
-from typing import List, Tuple, Dict, Any
+from abc import ABC
 from collections import deque
+from typing import List
+
+import numpy as np
 
 # Import validation framework
 from src.classes.ValidateOperatorManager import ValidatedDestroyOperator
 from src.classes.solution import Solution
-from src.common import Item, Bin, PlacedItem
+from src.common import Item
 
 
 class PerformanceTracker:
@@ -81,7 +81,7 @@ class PerformanceTracker:
         return success_rate > 0.7  # High success rate
 
 
-class AdaptiveDestroyBase(ValidatedDestroyOperator):
+class AdaptiveDestroyBase(ValidatedDestroyOperator, ABC):
     """Base class for adaptive destroy operators"""
 
     def __init__(self, name: str, base_min_percent=0.05, base_max_percent=0.25):
@@ -180,7 +180,7 @@ class AdaptiveUtilizationBasedDestroy(AdaptiveDestroyBase):
                 removed_items.append(item)
 
         solution.remove_items(removed_items)
-        print(f"{self.name}: Removed {len(removed_items)} items from {len(poor_bins)} poorly utilized bins")
+        # print(f"{self.name}: Removed {len(removed_items)} items from {len(poor_bins)} poorly utilized bins")
         return removed_items
 
 
@@ -247,7 +247,7 @@ class AdaptiveLargeItemDestroy(AdaptiveDestroyBase):
         items_to_remove = [item for item, _ in large_items[:target_remove]]
 
         solution.remove_items(items_to_remove)
-        print(f"{self.name}: Removed {len(items_to_remove)} large items (threshold: {volume_threshold:.2f})")
+        # print(f"{self.name}: Removed {len(items_to_remove)} large items (threshold: {volume_threshold:.2f})")
         return items_to_remove
 
 
@@ -312,7 +312,7 @@ class AdaptiveWorstBinDestroy(AdaptiveDestroyBase):
                 break
 
         solution.remove_items(removed_items)
-        print(f"{self.name}: Emptied {bins_emptied} worst bins, removed {len(removed_items)} items")
+        # print(f"{self.name}: Emptied {bins_emptied} worst bins, removed {len(removed_items)} items")
         return removed_items
 
 
@@ -332,7 +332,7 @@ def get_adaptive_destroy_operators():
 
 
 if __name__ == "__main__":
-    # Example usage
+
     destroy_ops = get_adaptive_destroy_operators()
 
     print("Adaptive Destroy Operators:")

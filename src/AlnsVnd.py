@@ -15,36 +15,54 @@ Based on:
  3) VND Hemmelmayr, V. C., Cordeau, J. F., & Crainic, T. G. (2012). An adaptive large neighborhood search heuristic
  for the multi-echelon vehicle routing problem.
 
+
 @author: Kreecha Puphaiboon
 
 MIT License
 
 Copyright (c) 2025 Kreecha Puphaiboon
 
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
 """
 
-from datetime import timedelta
-
-import numpy as np
-import random
 import copy
 import math
 import time
-from typing import List, Tuple, Dict, Optional
-from dataclasses import dataclass
+from datetime import timedelta
+from typing import List, Dict
 
-from src.common import Item, Bin, PlacedItem, ExtremePoint, SortingRule, MeritFunction, BenchmarkGenerator
+import numpy as np
+
+from src.classes.GraspOperators import get_all_grasp_operators
+from src.BinVisualizer import BinPackingVisualizer
 from src.ExtremePointHeuristic import ExtremePointBinPacking3D
 from src.classes.solution import Solution
-from src.AlnsGraspOperators import get_all_grasp_operators
+from src.common import Item, Bin, BenchmarkGenerator
+from src.destroy.adaptive_destroy_operators import AdaptiveUtilizationBasedDestroy, AdaptiveLargeItemDestroy, \
+    AdaptiveWorstBinDestroy
+from src.destroy.destroy_operators import AdaptiveRandomDestroy
+from src.repair.adaptive_repair_operators import AdaptiveRegretInsertRepair, AdaptiveBestFitRepair, \
+    AdaptiveFirstFitDecreasingRepair
+from src.repair.repair_operators import RobustGreedyRepair
+from src.vnd_implementation import create_vnd_engine
 
-from src.BinVisualizer import BinPackingVisualizer
-from src.destroy.destroy_operators import AdaptiveRandomDestroy, UtilizationBasedDestroy
-from src.repair.repair_operators import RegretRepair, SmartRegretRepair, RobustGreedyRepair
-from src.shaw_regret_operators import AdaptiveShawDestroy, AdaptiveShawSizeDestroy
-from src.vnd_implementation import VariableNeighborhoodDescent, create_vnd_engine
 
-# TODO: Refactor Operators into destroy and repair
 # TODO: Test on specific instances: filenames = ['thpack1.txt', 'thpack2.txt']  see main_benchmark_driver.py
 
 class HybridALNS_VND:
@@ -387,15 +405,20 @@ def create_hybrid_alns_vnd(bin_template: Bin,
         # WorstBinDestroy(num_bins_to_target=1),
         # LargeItemDestroy(percentage=0.2),
         AdaptiveRandomDestroy(),    # min_rate: float = 0.10, max_rate: float = 0.30
-        UtilizationBasedDestroy(),
-        # AdaptiveShawSizeDestroy(),
+        # UtilizationBasedDestroy(),
+        AdaptiveUtilizationBasedDestroy(),
+        AdaptiveLargeItemDestroy(),
+        AdaptiveWorstBinDestroy()
     ]
 
     repair_operators = [
         RobustGreedyRepair(),
         # SafeBestFitRepair(),
         # RobustRegretRepair(k=1),
-        RegretRepair(k=2),
+        # RegretRepair(k=2),
+        AdaptiveRegretInsertRepair(regret_degree=2),    # fixed
+        AdaptiveBestFitRepair(),            # fixed
+        AdaptiveFirstFitDecreasingRepair()    # fixed
     ]
 
     # Add GRASP operators if requested

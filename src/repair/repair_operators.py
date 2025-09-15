@@ -10,19 +10,15 @@ Adapted for 3D Bin Packing Problem using Extreme Point Heuristics
 MIT License
 """
 
-import numpy as np
-import random
 import copy
-import math
-from typing import List, Tuple, Set, Optional
-from dataclasses import dataclass
+from typing import List, Tuple, Optional
 
-from src.common import Item, Bin, PlacedItem, ExtremePoint, SortingRule, MeritFunction
+import numpy as np
+
 from src.ExtremePointHeuristic import ExtremePointBinPacking3D
-
-
-from src.classes.ValidateOperatorManager import ValidatedDestroyOperator, ValidatedRepairOperator
+from src.classes.ValidateOperatorManager import ValidatedRepairOperator
 from src.classes.solution import Solution
+from src.common import Item, Bin, PlacedItem, ExtremePoint, SortingRule, MeritFunction
 
 
 class RepairOperator(ValidatedRepairOperator):

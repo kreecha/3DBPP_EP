@@ -1,3 +1,28 @@
+# -*- coding: utf-8 -*-
+"""
+Created on Tue Sep 9 08:26:17 2025
+
+AlnsVnD.py - Adaptive Large Neighborhood Search (ALNS) and Variable Neighborhood Descent (VND) are both metaheuristics
+used to solve complex combinatorial optimization problems, such as the Vehicle Routing Problem.This file purpose to
+solve 3D Bin Packing.
+
+Extreme Point Heuristics, Adaptive Large Neighborhood Search and Variable Neighborhood Descent for 3D Bin Packing
+
+Based on:
+ 1) Extreme Point Heuristics from Crainic, Perboli, and Tadei (2008)
+ 2) Pisinger, D., & Ropke, S. (2007). A general heuristic for vehicle routing problems.
+ Computers & Operations Research, 34(8), 2403-2435.
+ 3) VND Hemmelmayr, V. C., Cordeau, J. F., & Crainic, T. G. (2012). An adaptive large neighborhood search heuristic
+ for the multi-echelon vehicle routing problem.
+
+@author: Kreecha Puphaiboon
+
+MIT License
+
+Copyright (c) 2025 Kreecha Puphaiboon
+
+"""
+
 from datetime import timedelta
 
 import numpy as np
@@ -8,16 +33,19 @@ import time
 from typing import List, Tuple, Dict, Optional
 from dataclasses import dataclass
 
-from common import Item, Bin, PlacedItem, ExtremePoint, SortingRule, MeritFunction
-from ExtremePointHeuristic import ExtremePointBinPacking3D
-from classes.solution import Solution
-from src.AlnsExtremePoint_Cluade import SafeBestFitRepair
-from src.destroy.destroy_operators import AdaptiveRandomDestroy, UtilizationBasedDestroy
-from src.repair.repair_operators import RegretRepair, SmartRegretRepair
-from vnd_implementation import VariableNeighborhoodDescent, create_vnd_engine
+from src.common import Item, Bin, PlacedItem, ExtremePoint, SortingRule, MeritFunction, BenchmarkGenerator
+from src.ExtremePointHeuristic import ExtremePointBinPacking3D
+from src.classes.solution import Solution
+from src.AlnsGraspOperators import get_all_grasp_operators
 
-# TODO: Report missing items or bins
+from src.BinVisualizer import BinPackingVisualizer
+from src.destroy.destroy_operators import AdaptiveRandomDestroy, UtilizationBasedDestroy
+from src.repair.repair_operators import RegretRepair, SmartRegretRepair, RobustGreedyRepair
+from src.shaw_regret_operators import AdaptiveShawDestroy, AdaptiveShawSizeDestroy
+from src.vnd_implementation import VariableNeighborhoodDescent, create_vnd_engine
+
 # TODO: Refactor Operators into destroy and repair
+# TODO: Test on specific instances: filenames = ['thpack1.txt', 'thpack2.txt']  see main_benchmark_driver.py
 
 class HybridALNS_VND:
     """Hybrid ALNS-VND for 3D Bin Packing following the provided pseudocode"""
@@ -45,11 +73,12 @@ class HybridALNS_VND:
         self.vnd = create_vnd_engine(max_time_per_search=vnd_max_time)
 
         # Initialize ALNS components
-        from operator_selection import RouletteWheel
+        from src.operator_selection import RouletteWheel
         self.operator_selector = RouletteWheel(
             scores=[100.0, 50.0, 20.0, 5.0],
-            # scores=[100.0, 50.0, 20.0, 1.0],
-            decay=0.99,
+            # scores=[100.0, 50.0, 20.0, 1.0],  # POOR
+            decay=0.80,
+            # decay=0.99,
             num_destroy=len(self.destroy_operators),
             num_repair=len(self.repair_operators)
         )
@@ -353,17 +382,13 @@ def create_hybrid_alns_vnd(bin_template: Bin,
                            random_seed: int = 42) -> HybridALNS_VND:
     """Create a hybrid ALNS-VND instance with specified configuration"""
 
-    # Base operators
-    from Operators import get_all_grasp_operators, RobustGreedyRepair
-    from src.destroy.destroy_operators import RandomDestroy, WorstBinDestroy, LargeItemDestroy
-
     destroy_operators = [
         # RandomDestroy(min_remove=4, max_remove=5),
         # WorstBinDestroy(num_bins_to_target=1),
         # LargeItemDestroy(percentage=0.2),
-        AdaptiveRandomDestroy(),
+        AdaptiveRandomDestroy(),    # min_rate: float = 0.10, max_rate: float = 0.30
         UtilizationBasedDestroy(),
-
+        AdaptiveShawSizeDestroy(),
     ]
 
     repair_operators = [
@@ -371,7 +396,6 @@ def create_hybrid_alns_vnd(bin_template: Bin,
         # SafeBestFitRepair(),
         # RobustRegretRepair(k=1),
         RegretRepair(k=2),
-        # SmartRegretRepair()   # BUG
     ]
 
     # Add GRASP operators if requested
@@ -395,7 +419,7 @@ def create_hybrid_alns_vnd(bin_template: Bin,
 # COMPARISON AND DEMONSTRATION FUNCTIONS
 # =============================================================================
 
-def compare_alns_vs_hybrid(random_seed: int = 42):
+def compare_alns_vs_hybrid(random_seed: int = 42, _is_plot=False):
     """Compare pure ALNS vs Hybrid ALNS-VND"""
     print("=== ALNS vs HYBRID ALNS-VND COMPARISON ===\n")
 
@@ -413,7 +437,7 @@ def compare_alns_vs_hybrid(random_seed: int = 42):
         print(f"Testing Class {class_type}, {n_items} items...")
 
         # Generate instance
-        from common import BenchmarkGenerator
+
         items, bin_template = BenchmarkGenerator.generate_martello_instance(
             class_type, n_items, random_seed=random_seed)
 
@@ -452,6 +476,9 @@ def compare_alns_vs_hybrid(random_seed: int = 42):
         items_lost = len(items) - items_packed
         if items_lost > 0:
             print(f"⚠️  WARNING: {items_lost} items were lost during ALNS_VND!")
+            # raise Error
+
+
         # Record results
         result = {
             'instance': f"Class {class_type} ({n_items} items)",
@@ -484,6 +511,14 @@ def compare_alns_vs_hybrid(random_seed: int = 42):
     for result in results:
         print(f"{result['instance']:<20} | {result['ep_bins']:8d} |{result['pure_bins']:8d} | {result['hybrid_bins']:8d} | "
               f"{result['bin_improvement']:+5d} | {result['util_improvement']:+.3f} | {result['vnd_applications']:7d}")
+
+    if _is_plot:
+
+        # Create visualizer
+        visualizer = BinPackingVisualizer(hybrid_solution)
+
+        print("2. All bins overview...")
+        visualizer.plot_all_bins_3d(max_bins=hybrid_solution.num_bins)
 
     return results
 
@@ -522,13 +557,10 @@ if __name__ == "__main__":
     # Run
     print("Running Hybrid ALNS-VND...\n")
 
-    # Demonstrate the algorithm
-    hybrid, solution = demonstrate_hybrid_alns_vnd()
-
     print("\n" + "=" * 80)
 
-    # Compare ALNS vs Hybrid
-    compare_alns_vs_hybrid(random_seed=42)
+    # Compare EP, ALNS vs Hybrid
+    compare_alns_vs_hybrid(random_seed=42, _is_plot=False)
 
     end_time = time.time()
     end = end_time - start_time

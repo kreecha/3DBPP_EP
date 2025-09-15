@@ -1,3 +1,28 @@
+# -*- coding: utf-8 -*-
+"""
+Created on Tue Sep 9 08:26:17 2025
+AlnsVnD.py - Adaptive Large Neighborhood Search (ALNS) and Variable Neighborhood Descent (VND) are both metaheuristics
+used to solve complex combinatorial optimization problems, such as the Vehicle Routing Problem.This file purpose to
+solve 3D Bin Packing.
+
+Extreme Point Heuristics, Adaptive Large Neighborhood Search and Variable Neighborhood Descent for 3D Bin Packing
+
+Based on:
+ 1) Extreme Point Heuristics from Crainic, Perboli, and Tadei (2008)
+ 2) Pisinger, D., & Ropke, S. (2007). A general heuristic for vehicle routing problems.
+ Computers & Operations Research, 34(8), 2403-2435.
+ 3) VND Hemmelmayr, V. C., Cordeau, J. F., & Crainic, T. G. (2012). An adaptive large neighborhood search heuristic
+ for the multi-echelon vehicle routing problem.
+
+Solution to be assessed and no violation
+
+@author: Kreecha Puphaiboon
+
+MIT License
+
+Copyright (c) 2025 Kreecha Puphaiboon
+
+"""
 import numpy as np
 import random
 import copy
@@ -5,7 +30,6 @@ import math
 from typing import List, Tuple, Set
 from dataclasses import dataclass
 
-# Import shared classes (assuming these are available from your existing code)
 from src.common import Item, Bin, PlacedItem, ExtremePoint, SortingRule, MeritFunction
 from src.ExtremePointHeuristic import ExtremePointBinPacking3D
 from src.classes.ValidateOperatorManager import ValidatedDestroyOperator, ValidatedRepairOperator

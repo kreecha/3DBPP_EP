@@ -19,7 +19,7 @@ from typing import List, Tuple, Set
 from dataclasses import dataclass
 
 from src.classes.ValidateOperatorManager import ValidatedDestroyOperator, ValidatedRepairOperator
-# Import shared classes (assuming these are available from your existing code)
+# Import shared classes (assuming these are available from   existing code)
 from src.common import Item, Bin, PlacedItem, ExtremePoint, SortingRule, MeritFunction, BenchmarkGenerator
 from src.ExtremePointHeuristic import ExtremePointBinPacking3D
 from src.AlnsExtremePoint_Cluade import RobustGreedyRepair, SafeBestFitRepair, RegretRepair
@@ -549,7 +549,7 @@ def demonstrate_grasp_operators():
         print()
 
 
-# Integration of GRASP operators into your existing ALNS
+# Integration of GRASP operators into   existing ALNS
 
 class Enhanced_ALNS_3D_BinPacking:
     """Your ALNS enhanced with GRASP-inspired operators"""
@@ -595,14 +595,14 @@ class Enhanced_ALNS_3D_BinPacking:
     def _initialize_operators(self):
         """Initialize operators with GRASP additions"""
 
-        # Base destroy operators (your existing ones)
+        # Base destroy operators   
         self.destroy_operators = [
             RandomDestroy(min_remove=5, max_remove=15),
             WorstBinDestroy(num_bins_to_target=1),
             LargeItemDestroy(percentage=0.2),
         ]
 
-        # Base repair operators (your existing ones)
+        # Base repair operators   
         self.repair_operators = [
             RobustGreedyRepair(),
             SafeBestFitRepair(),
@@ -908,9 +908,9 @@ def compare_grasp_vs_baseline(random_seed: int = 42):
     return results
 
 
-# Usage example with your existing code
+# Usage example with   existing code
 def integrate_with_existing_alns():
-    """Show how to integrate GRASP operators with your existing ALNS"""
+    """Show how to integrate GRASP operators with   existing ALNS"""
     print("=== INTEGRATION WITH EXISTING ALNS ===\n")
 
     # Create test problem
@@ -930,16 +930,16 @@ def integrate_with_existing_alns():
 
     print("\n" + "=" * 60)
 
-    # Option 2: Add GRASP operators to your existing ALNS
+    # Option 2: Add GRASP operators to   existing ALNS
     print("Option 2: Add GRASP operators to existing ALNS")
-    print("Add these lines to your existing ALNS __init__ method:")
+    print("Add these lines to   existing ALNS __init__ method:")
     print("""
-    # In your ALNS __init__ method, add:
+    # In   ALNS __init__ method, add:
     grasp_destroy, grasp_repair = get_all_grasp_operators()
     self.destroy_operators.extend(grasp_destroy)
     self.repair_operators.extend(grasp_repair)
 
-    # Update your RouletteWheel with new operator counts:
+    # Update   RouletteWheel with new operator counts:
     self.operator_selector = RouletteWheel(
         scores=[100.0, 50.0, 20.0, 5.0],
         decay=0.99,

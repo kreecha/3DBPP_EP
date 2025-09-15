@@ -254,7 +254,7 @@ class HybridALNS_VND:
 
     def _calculate_objective(self, solution: Solution) -> float:
         """Calculate objective using selected function"""
-        # Use CompleteImprovedObjectives from your previous implementations
+        # Use CompleteImprovedObjectives from previous implementations
         if self.objective_type == 'hybrid':
             return solution.num_bins * 1000.0 + (1.0 - solution.average_utilization) * 50.0 + np.var(
                 solution.get_bin_utilizations()) * 20.0
@@ -388,7 +388,7 @@ def create_hybrid_alns_vnd(bin_template: Bin,
         # LargeItemDestroy(percentage=0.2),
         AdaptiveRandomDestroy(),    # min_rate: float = 0.10, max_rate: float = 0.30
         UtilizationBasedDestroy(),
-        AdaptiveShawSizeDestroy(),
+        # AdaptiveShawSizeDestroy(),
     ]
 
     repair_operators = [

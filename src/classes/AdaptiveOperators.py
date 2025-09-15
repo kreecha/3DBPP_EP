@@ -9,7 +9,7 @@ from dataclasses import dataclass
 
 from src.common import Item, Bin, PlacedItem, ExtremePoint, SortingRule, MeritFunction
 from src.ExtremePointHeuristic import ExtremePointBinPacking3D
-from src.validated_operators_base import ValidatedDestroyOperator, ValidatedRepairOperator
+from src.classes.ValidateOperatorManager import ValidatedDestroyOperator, ValidatedRepairOperator
 from src.classes.solution import Solution
 
 

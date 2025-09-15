@@ -38,7 +38,7 @@ import mpl_toolkits.mplot3d.art3d as art3d
 from typing import List, Dict
 
 # Import shared classes and methods
-from common import Item, Bin, PlacedItem, ExtremePoint, SortingRule, MeritFunction, BinPacking3D, BenchmarkGenerator
+from src.common import Item, Bin, PlacedItem, ExtremePoint, SortingRule, MeritFunction, BinPacking3D, BenchmarkGenerator
 
 
 class ExtremePointBinPacking3D(BinPacking3D):
@@ -99,6 +99,24 @@ class ExtremePointBinPacking3D(BinPacking3D):
 
         return len(self.bins)
 
+    def is_solution_feasible(self) -> bool:
+        """Check if the current complete solution is feasible"""
+        for bin_idx, bin_items in enumerate(self.bins):
+            # Check each item fits in bin
+            for placed_item in bin_items:
+                if (placed_item.x + placed_item.item.width > self.bin_template.width + 1e-9 or
+                        placed_item.y + placed_item.item.depth > self.bin_template.depth + 1e-9 or
+                        placed_item.z + placed_item.item.height > self.bin_template.height + 1e-9):
+                    return False
+
+            # Check no overlaps between items in same bin
+            for i, item1 in enumerate(bin_items):
+                for j, item2 in enumerate(bin_items[i + 1:], i + 1):
+                    if self._items_overlap(item1.item,
+                                           ExtremePoint(item1.x, item1.y, item1.z),
+                                           item2):
+                        return False
+        return True
 
 def visualize_packing_solution(solver: ExtremePointBinPacking3D, bin_idx: int = 0, title: str = "3D Bin Packing Solution"):
     """Visualize a single bin's packing solution"""
@@ -221,6 +239,8 @@ def demonstrate_algorithm():
     print("\n=== Testing EP-FFD with Volume-Height sorting ===")
     num_bins_ffd = solver.ep_ffd(items, SortingRule.VOLUME_HEIGHT)
     print(f"EP-FFD result: {num_bins_ffd} bins")
+    print(f"solution is {solver.is_solution_feasible()}")
+
     solver.print_solution_summary()
 
     print("\n=== Testing EP-BFD with Residual Space merit ===")

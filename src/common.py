@@ -58,6 +58,19 @@ class Item:
     def __repr__(self):
         return f"Item(id={self.id}, w={self.width}, d={self.depth}, h={self.height})"
 
+    def __hash__(self):
+        """Hash based on id if available, otherwise use object identity"""
+        if self.id is not None:
+            return hash(self.id)
+        return id(self)
+
+    def __eq__(self, other):
+        """Equality comparison based on id if available, otherwise object identity"""
+        if not isinstance(other, Item):
+            return NotImplemented
+        if self.id is not None and other.id is not None:
+            return self.id == other.id
+        return self is other
 
 @dataclass
 class Bin:
@@ -417,106 +430,93 @@ class BinPacking3D:
             return -(ep.residual_space_x * ep.residual_space_y * ep.residual_space_z)
         return float('inf')
 
-class BenchmarkGenerator:
-    """Generate 3D bin packing instances following Martello et al. format"""
 
+class BenchmarkGenerator:
     @staticmethod
-    def generate_martello_instance(class_type: int, n_items: int, bin_size: int = 100) -> Tuple[List[Item], Bin]:
+    def generate_martello_instance(class_type: int, n_items: int, bin_size: int = 100, random_seed: int = None,
+                                   rng: np.random.RandomState = None) -> Tuple[List[Item], Bin]:
         """Generate instance following Martello et al. (2000) classification"""
-        np.random.seed()  # Use current time
+        if rng is None:
+            rng = np.random.RandomState(random_seed if random_seed is not None else np.random.randint(0, 1000000))
 
         items = []
         bin_template = Bin(bin_size, bin_size, bin_size)
 
         if class_type == 1:
-            # Type 1 majority: wj ∈ [1, W/2], hj ∈ [2H/3, H], dj ∈ [2D/3, D]
             for i in range(n_items):
-                if np.random.random() < 0.6:  # Type 1 - 60%
-                    w = np.random.uniform(1, bin_size / 2)
-                    h = np.random.uniform(2 * bin_size / 3, bin_size)
-                    d = np.random.uniform(2 * bin_size / 3, bin_size)
-                else:  # Other types - 10% each
-                    type_choice = np.random.choice([2, 3, 4, 5])
-                    w, h, d = BenchmarkGenerator._generate_item_by_type(type_choice, bin_size)
-
+                if rng.random() < 0.6:  # Type 1 - 60%
+                    w = rng.uniform(1, bin_size / 2)
+                    h = rng.uniform(2 * bin_size / 3, bin_size)
+                    d = rng.uniform(2 * bin_size / 3, bin_size)
+                else:
+                    type_choice = rng.choice([2, 3, 4, 5])
+                    w, h, d = BenchmarkGenerator._generate_item_by_type(type_choice, bin_size, rng)
                 items.append(Item(w, d, h, i))
-
         elif class_type == 4:
-            # Type 4 majority: wj ∈ [W/2, W], hj ∈ [H/2, H], dj ∈ [D/2, D]
             for i in range(n_items):
-                if np.random.random() < 0.6:  # Type 4 - 60%
-                    w = np.random.uniform(bin_size / 2, bin_size)
-                    h = np.random.uniform(bin_size / 2, bin_size)
-                    d = np.random.uniform(bin_size / 2, bin_size)
-                else:  # Other types - 10% each
-                    type_choice = np.random.choice([1, 2, 3, 5])
-                    w, h, d = BenchmarkGenerator._generate_item_by_type(type_choice, bin_size)
-
+                if rng.random() < 0.6:  # Type 4 - 60%
+                    w = rng.uniform(bin_size / 2, bin_size)
+                    h = rng.uniform(bin_size / 2, bin_size)
+                    d = rng.uniform(bin_size / 2, bin_size)
+                else:
+                    type_choice = rng.choice([1, 2, 3, 5])
+                    w, h, d = BenchmarkGenerator._generate_item_by_type(type_choice, bin_size, rng)
                 items.append(Item(w, d, h, i))
-
         elif class_type == 5:
-            # Type 5 majority: wj ∈ [1, W/2], hj ∈ [1, H/2], dj ∈ [1, D/2]
             for i in range(n_items):
-                if np.random.random() < 0.6:  # Type 5 - 60%
-                    w = np.random.uniform(1, bin_size / 2)
-                    h = np.random.uniform(1, bin_size / 2)
-                    d = np.random.uniform(1, bin_size / 2)
-                else:  # Other types - 10% each
-                    type_choice = np.random.choice([1, 2, 3, 4])
-                    w, h, d = BenchmarkGenerator._generate_item_by_type(type_choice, bin_size)
-
+                if rng.random() < 0.6:  # Type 5 - 60%
+                    w = rng.uniform(1, bin_size / 2)
+                    h = rng.uniform(1, bin_size / 2)
+                    d = rng.uniform(1, bin_size / 2)
+                else:
+                    type_choice = rng.choice([1, 2, 3, 4])
+                    w, h, d = BenchmarkGenerator._generate_item_by_type(type_choice, bin_size, rng)
                 items.append(Item(w, d, h, i))
-
         elif class_type == 6:
-            # Class 6: wj, hj, dj ∈ [1, 10] and W = H = D = 10
             bin_template = Bin(10, 10, 10)
             for i in range(n_items):
-                w = np.random.uniform(1, 10)
-                h = np.random.uniform(1, 10)
-                d = np.random.uniform(1, 10)
+                w = rng.uniform(1, 10)
+                h = rng.uniform(1, 10)
+                d = rng.uniform(1, 10)
                 items.append(Item(w, d, h, i))
-
         elif class_type == 7:
-            # Class 7: wj, hj, dj ∈ [1, 35] and W = H = D = 40
             bin_template = Bin(40, 40, 40)
             for i in range(n_items):
-                w = np.random.uniform(1, 35)
-                h = np.random.uniform(1, 35)
-                d = np.random.uniform(1, 35)
+                w = rng.uniform(1, 35)
+                h = rng.uniform(1, 35)
+                d = rng.uniform(1, 35)
                 items.append(Item(w, d, h, i))
-
         elif class_type == 8:
-            # Class 8: wj, hj, dj ∈ [1, 100] and W = H = D = 100
             for i in range(n_items):
-                w = np.random.uniform(1, 100)
-                h = np.random.uniform(1, 100)
-                d = np.random.uniform(1, 100)
+                w = rng.uniform(1, 100)
+                h = rng.uniform(1, 100)
+                d = rng.uniform(1, 100)
                 items.append(Item(w, d, h, i))
 
         return items, bin_template
 
     @staticmethod
-    def _generate_item_by_type(item_type: int, bin_size: int) -> Tuple[float, float, float]:
+    def _generate_item_by_type(item_type: int, bin_size: int, rng: np.random.RandomState) -> Tuple[float, float, float]:
         """Generate item dimensions by type"""
         if item_type == 1:
-            w = np.random.uniform(1, bin_size / 2)
-            h = np.random.uniform(2 * bin_size / 3, bin_size)
-            d = np.random.uniform(2 * bin_size / 3, bin_size)
+            w = rng.uniform(1, bin_size / 2)
+            h = rng.uniform(2 * bin_size / 3, bin_size)
+            d = rng.uniform(2 * bin_size / 3, bin_size)
         elif item_type == 2:
-            w = np.random.uniform(2 * bin_size / 3, bin_size)
-            h = np.random.uniform(1, bin_size / 2)
-            d = np.random.uniform(2 * bin_size / 3, bin_size)
+            w = rng.uniform(2 * bin_size / 3, bin_size)
+            h = rng.uniform(1, bin_size / 2)
+            d = rng.uniform(2 * bin_size / 3, bin_size)
         elif item_type == 3:
-            w = np.random.uniform(2 * bin_size / 3, bin_size)
-            h = np.random.uniform(2 * bin_size / 3, bin_size)
-            d = np.random.uniform(1, bin_size / 2)
+            w = rng.uniform(2 * bin_size / 3, bin_size)
+            h = rng.uniform(2 * bin_size / 3, bin_size)
+            d = rng.uniform(1, bin_size / 2)
         elif item_type == 4:
-            w = np.random.uniform(bin_size / 2, bin_size)
-            h = np.random.uniform(bin_size / 2, bin_size)
-            d = np.random.uniform(bin_size / 2, bin_size)
+            w = rng.uniform(bin_size / 2, bin_size)
+            h = rng.uniform(bin_size / 2, bin_size)
+            d = rng.uniform(bin_size / 2, bin_size)
         elif item_type == 5:
-            w = np.random.uniform(1, bin_size / 2)
-            h = np.random.uniform(1, bin_size / 2)
-            d = np.random.uniform(1, bin_size / 2)
-
+            w = rng.uniform(1, bin_size / 2)
+            h = rng.uniform(1, bin_size / 2)
+            d = rng.uniform(1, bin_size / 2)
         return w, h, d
+

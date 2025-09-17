@@ -35,7 +35,7 @@ import copy
 import time
 import matplotlib.pyplot as plt
 import mpl_toolkits.mplot3d.art3d as art3d
-from typing import List, Dict
+from typing import List, Dict, Optional
 
 # Import shared classes and methods
 from src.common import Item, Bin, PlacedItem, ExtremePoint, SortingRule, MeritFunction, BinPacking3D, BenchmarkGenerator
@@ -117,6 +117,24 @@ class ExtremePointBinPacking3D(BinPacking3D):
                                            item2):
                         return False
         return True
+
+    def to_solution(self):
+        from src.classes.solution import Solution
+        """Convert the current solver state to a Solution object."""
+        if not hasattr(self, 'bins') or not hasattr(self, 'extreme_points') or not self.bins:
+            return None  # Indicate the instance isn’t ready (e.g., before c_epbfd)
+
+        bins = self.bins
+        extreme_points = self.extreme_points
+
+        # Ensure extreme_points matches bins length
+        while len(extreme_points) < len(bins):
+            extreme_points.append([ExtremePoint(0, 0, 0, self.bin_template.width,
+                                                self.bin_template.depth, self.bin_template.height)])
+        while len(extreme_points) > len(bins):
+            extreme_points.pop()
+
+        return Solution(bins=bins, extreme_points=extreme_points, bin_template=self.bin_template)
 
 def visualize_packing_solution(solver: ExtremePointBinPacking3D, bin_idx: int = 0, title: str = "3D Bin Packing Solution"):
     """Visualize a single bin's packing solution"""

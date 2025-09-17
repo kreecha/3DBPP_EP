@@ -417,67 +417,6 @@ def run_multiple_trials_analysis(n_runs: int = 10):
     return results
 
 
-# Simplified version without pandas dependency
-def run_basic_multiple_trials(n_runs: int = 10):
-    """Basic multiple trials without pandas dependency"""
-
-    test_instances = [(1, 30), (5, 30), (8, 40)]
-
-    print(f"=== BASIC MULTIPLE TRIALS ANALYSIS ({n_runs} runs) ===")
-
-    for class_type, n_items in test_instances:
-        print(f"\nTesting Class {class_type}, {n_items} items:")
-
-        ep_bins_list = []
-        alns_bins_list = []
-        hybrid_bins_list = []
-
-        for run in range(n_runs):
-            print(f"  Run {run + 1}/{n_runs}...", end=" ")
-
-            # Generate instance
-            seed = 42 + run * 1000 + class_type * 100 + n_items
-            items, bin_template = BenchmarkGenerator.generate_martello_instance(
-                class_type, n_items, random_seed=seed
-            )
-
-            # EP
-            ep_solver = ExtremePointBinPacking3D(bin_template)
-            ep_bins = ep_solver.c_epbfd(copy.deepcopy(items))
-            ep_bins_list.append(ep_bins)
-
-            # Try ALNS algorithms
-            try:
-                from AlnsVnd import create_hybrid_alns_vnd
-
-                # Pure ALNS
-                pure_alns = create_hybrid_alns_vnd(
-                    bin_template, vnd_frequency=0.0, max_time=30.0, random_seed=seed + 1
-                )
-                alns_solution = pure_alns.solve(copy.deepcopy(items))
-                alns_bins_list.append(alns_solution.num_bins)
-
-                # Hybrid
-                hybrid_alns = create_hybrid_alns_vnd(
-                    bin_template, vnd_frequency=0.3, max_time=30.0, random_seed=seed + 2
-                )
-                hybrid_solution = hybrid_alns.solve(copy.deepcopy(items))
-                hybrid_bins_list.append(hybrid_solution.num_bins)
-
-                print("✓")
-
-            except ImportError:
-                alns_bins_list.append(ep_bins)
-                hybrid_bins_list.append(ep_bins)
-                print("(ALNS unavailable)")
-
-        # Print results
-        print(f"  Results:")
-        print(f"    EP:     {np.mean(ep_bins_list):.1f} ± {np.std(ep_bins_list):.1f} bins")
-        print(f"    ALNS:   {np.mean(alns_bins_list):.1f} ± {np.std(alns_bins_list):.1f} bins")
-        print(f"    Hybrid: {np.mean(hybrid_bins_list):.1f} ± {np.std(hybrid_bins_list):.1f} bins")
-
-
 if __name__ == "__main__":
     # Run basic analysis
     # run_basic_multiple_trials(n_runs=5)

@@ -180,6 +180,12 @@ class HybridALNS_VND:
 
             if self._should_apply_vnd(iteration, repaired_solution):
                 vnd_start_time = time.time()
+
+                original_obj = self._calculate_objective(current_solution)
+                improved_solution = self.vnd.search(current_solution, self._calculate_objective)
+                new_vnd_obj = self._calculate_objective(improved_solution)
+                vnd_improved = new_vnd_obj < original_obj
+
                 vnd_solution = self.vnd.search(repaired_solution, self._calculate_objective)
                 vnd_time = time.time() - vnd_start_time
 

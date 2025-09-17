@@ -30,16 +30,14 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 """
 
-import numpy as np
-import random
 import copy
-import math
-from typing import List, Tuple, Set
 from dataclasses import dataclass
+from typing import List
 
-from src.common import Item, Bin, PlacedItem, ExtremePoint, SortingRule, MeritFunction
+import numpy as np
+
 from src.ExtremePointHeuristic import ExtremePointBinPacking3D
-from src.classes.ValidateOperatorManager import ValidatedDestroyOperator, ValidatedRepairOperator
+from src.common import Item, Bin, PlacedItem, ExtremePoint
 
 
 @dataclass
